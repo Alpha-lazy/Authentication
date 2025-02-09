@@ -4,7 +4,9 @@ import { verifyToken } from "./auth";
 // Extend Express Request type to include user
 declare module 'express' {
   interface Request {
-    user?: any;
+    user?: {
+      id: string;
+    };
   }
 }
 
@@ -30,10 +32,10 @@ export function authenticateToken(
 }
 
 export function validatePlaylist(req: Request, res: Response, next: NextFunction) {
-  const { name, url, songCount } = req.body;
+  const { name, url, songCount, imageUrl } = req.body;
 
-  if (!name || !url || !songCount) {
-    return res.status(400).json({ message: "Missing required playlist fields" });
+  if (!name || !url || !songCount || !imageUrl) {
+    return res.status(400).json({ message: "Missing required playlist fields (name, url, songCount, imageUrl)" });
   }
 
   next();

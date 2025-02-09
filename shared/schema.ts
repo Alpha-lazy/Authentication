@@ -6,6 +6,7 @@ export const users = pgTable("users", {
   id: text("id").primaryKey(), // Changed to text to store ObjectId as string
   email: text("email").notNull().unique(),
   name: text("name").notNull(),
+  password: text("password").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -20,6 +21,8 @@ export const favorites = pgTable("favorites", {
   id: text("id").primaryKey(), // Changed to text for consistency
   userId: text("user_id").notNull(),
   playlistId: text("playlist_id").notNull(),
+  name: text("name").notNull(),
+  imageUrl: text("image_url").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -37,9 +40,16 @@ export const insertFavoriteSchema = createInsertSchema(favorites).omit({
   createdAt: true,
 });
 
+// Login schema
+export const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+});
+
 export type User = typeof users.$inferSelect;
 export type Playlist = typeof playlists.$inferSelect;
 export type Favorite = typeof favorites.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertPlaylist = z.infer<typeof insertPlaylistSchema>;
 export type InsertFavorite = z.infer<typeof insertFavoriteSchema>;
+export type LoginCredentials = z.infer<typeof loginSchema>;

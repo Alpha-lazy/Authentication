@@ -2,7 +2,7 @@ import { Express, Request } from "express";
 import { createServer } from "http";
 import { authenticateToken, validatePlaylist } from "./middleware";
 import { getDB } from "./db";
-import { generateToken, registerUser } from "./auth";
+import { generateToken, registerUser, loginUser } from "./auth";
 import { ObjectId } from "mongodb";
 
 // Extend Express Request to include user
@@ -18,12 +18,27 @@ export function registerRoutes(app: Express) {
   // Auth routes
   app.post("/api/register", async (req, res) => {
     try {
-      const { email, name } = req.body;
-      if (!email || !name) {
-        return res.status(400).json({ message: "Email and name are required" });
+      const { email, name, password } = req.body;
+      if (!email || !name || !password) {
+        return res.status(400).json({ message: "Email, name, and password are required" });
       }
 
-      const user = await registerUser(email, name);
+      const user = await registerUser(email, name, password);
+      const token = generateToken(user);
+      res.json({ token });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+
+      const user = await loginUser(email, password);
       const token = generateToken(user);
       res.json({ token });
     } catch (error: any) {
@@ -55,6 +70,7 @@ export function registerRoutes(app: Express) {
 
         const userId = new ObjectId(req.user.id);
         const playlistId = new ObjectId(req.body.playlistId);
+        const { name, imageUrl } = req.body;
 
         const existing = await db
           .collection("favorites")
@@ -68,7 +84,13 @@ export function registerRoutes(app: Express) {
 
         await db
           .collection("favorites")
-          .insertOne({ userId, playlistId, createdAt: new Date() });
+          .insertOne({ 
+            userId, 
+            playlistId, 
+            name,
+            imageUrl,
+            createdAt: new Date() 
+          });
 
         res.json({ message: "Added to favorites" });
       } catch (error) {
@@ -132,7 +154,11 @@ export function registerRoutes(app: Express) {
         ])
         .toArray();
 
-      res.json(favorites.map((f) => f.playlist));
+      res.json(favorites.map((f) => ({
+        ...f.playlist,
+        name: f.name,
+        imageUrl: f.imageUrl
+      })));
     } catch (error) {
       res.status(500).json({ message: "Error fetching favorites" });
     }
