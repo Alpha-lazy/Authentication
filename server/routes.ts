@@ -3,7 +3,7 @@ import { createServer } from "http";
 import { authenticateToken, validatePlaylist } from "./middleware";
 import { getDB } from "./db";
 import { generateToken, registerUser, loginUser } from "./auth";
-import { ObjectId } from "mongodb";
+// import { ObjectId } from "mongodb";
 
 // Extend Express Request to include user
 declare module 'express' {
@@ -90,15 +90,15 @@ export function registerRoutes(app: Express) {
         const { playlistId, name, imageUrl, url, songCount } = req.body;
 
         // Validate playlistId
-        if (!ObjectId.isValid(playlistId)) {
-          return res.status(400).json({ message: "Invalid playlist ID format" });
-        }
+        // if (!ObjectId.isValid(playlistId)) {
+        //   return res.status(400).json({ message: "Invalid playlist ID format" });
+        // }
 
         const existing = await db
           .collection("favorites")
           .findOne({ 
             userId,
-            playlistId: new ObjectId(playlistId)
+            playlistId: playlistId
           });
 
         if (existing) {
@@ -111,7 +111,7 @@ export function registerRoutes(app: Express) {
           .collection("favorites")
           .insertOne({ 
             userId, // Store the userId as is (string)
-            playlistId: new ObjectId(playlistId), // Convert playlistId to ObjectId
+            playlistId:playlistId, // Convert playlistId to ObjectId
             name,
             imageUrl,
             url,
@@ -137,7 +137,7 @@ export function registerRoutes(app: Express) {
         }
 
         const userId = req.user.id;
-        const playlistId = new ObjectId(req.params.id);
+        const playlistId = req.params.id;
 
         const result = await db
           .collection("favorites")
