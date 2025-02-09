@@ -2,11 +2,16 @@ import express from "express";
 import { registerRoutes } from "./routes";
 import { connectDB } from "./db";
 import cors from "cors";
-
+const corsConfig ={
+   origin:"*",
+   credential:true,
+   methods:["POST","GET","DELETE","PUT"]
+}
 const app = express();
 
 // Basic middleware
-app.use(cors());
+app.options("",cors(corsConfig))
+app.use(cors(corsConfig));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
