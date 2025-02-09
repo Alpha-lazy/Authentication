@@ -1,4 +1,5 @@
 import { MongoClient } from "mongodb";
+import * as ws from "ws"; //Keep this import as it is used in the edited code
 
 const url = "mongodb+srv://anishmore712:Anish%402007@cluster0.rjjzy.mongodb.net/";
 const dbName = "AlphaMusic";
