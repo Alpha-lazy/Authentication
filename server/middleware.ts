@@ -1,6 +1,13 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyToken } from "./auth";
 
+// Extend Express Request type to include user
+declare module 'express' {
+  interface Request {
+    user?: any;
+  }
+}
+
 export function authenticateToken(
   req: Request,
   res: Response,

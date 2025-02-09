@@ -1,9 +1,18 @@
-import { Express } from "express";
+import { Express, Request } from "express";
 import { createServer } from "http";
 import { authenticateToken, validatePlaylist } from "./middleware";
 import { getDB } from "./db";
 import { generateToken, registerUser } from "./auth";
 import { ObjectId } from "mongodb";
+
+// Extend Express Request to include user
+declare module 'express' {
+  interface Request {
+    user?: {
+      id: string;
+    };
+  }
+}
 
 export function registerRoutes(app: Express) {
   // Auth routes
@@ -37,10 +46,14 @@ export function registerRoutes(app: Express) {
     "/api/playlists/favorite",
     authenticateToken,
     validatePlaylist,
-    async (req, res) => {
+    async (req: Request, res) => {
       try {
         const db = getDB();
-        const userId = new ObjectId((req.user as any).id);
+        if (!req.user) {
+          return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        const userId = new ObjectId(req.user.id);
         const playlistId = new ObjectId(req.body.playlistId);
 
         const existing = await db
@@ -67,10 +80,14 @@ export function registerRoutes(app: Express) {
   app.delete(
     "/api/playlists/unfavorite/:id",
     authenticateToken,
-    async (req, res) => {
+    async (req: Request, res) => {
       try {
         const db = getDB();
-        const userId = new ObjectId((req.user as any).id);
+        if (!req.user) {
+          return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        const userId = new ObjectId(req.user.id);
         const playlistId = new ObjectId(req.params.id);
 
         const result = await db
@@ -90,10 +107,14 @@ export function registerRoutes(app: Express) {
     }
   );
 
-  app.get("/api/playlists/favorites", authenticateToken, async (req, res) => {
+  app.get("/api/playlists/favorites", authenticateToken, async (req: Request, res) => {
     try {
       const db = getDB();
-      const userId = new ObjectId((req.user as any).id);
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const userId = new ObjectId(req.user.id);
 
       const favorites = await db
         .collection("favorites")

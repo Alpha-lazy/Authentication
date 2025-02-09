@@ -8,7 +8,7 @@ export function generateToken(user: any) {
   return jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "7d" });
 }
 
-export function verifyToken(token: string) {
+export function verifyToken(token: string): any {
   return jwt.verify(token, JWT_SECRET);
 }
 
@@ -30,8 +30,7 @@ export async function registerUser(email: string, name: string) {
     };
 
     const result = await usersCollection.insertOne(newUser);
-    newUser._id = result.insertedId;
-    return newUser;
+    return { ...newUser, _id: result.insertedId };
   } catch (error) {
     throw error;
   }

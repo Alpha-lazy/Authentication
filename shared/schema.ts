@@ -1,28 +1,31 @@
-import { pgTable, text, serial, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, varchar, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+  id: text("id").primaryKey(), // Changed to text to store ObjectId as string
   email: text("email").notNull().unique(),
   name: text("name").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const playlists = pgTable("playlists", {
-  id: serial("id").primaryKey(),
+  id: text("id").primaryKey(), // Changed to text for consistency
   name: varchar("name", { length: 255 }).notNull(),
   url: text("url").notNull(),
   songCount: serial("song_count").notNull(),
 });
 
 export const favorites = pgTable("favorites", {
-  id: serial("id").primaryKey(),
-  userId: serial("user_id").notNull(),
-  playlistId: serial("playlist_id").notNull(),
+  id: text("id").primaryKey(), // Changed to text for consistency
+  userId: text("user_id").notNull(),
+  playlistId: text("playlist_id").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
+  createdAt: true,
 });
 
 export const insertPlaylistSchema = createInsertSchema(playlists).omit({
@@ -31,6 +34,7 @@ export const insertPlaylistSchema = createInsertSchema(playlists).omit({
 
 export const insertFavoriteSchema = createInsertSchema(favorites).omit({
   id: true,
+  createdAt: true,
 });
 
 export type User = typeof users.$inferSelect;
