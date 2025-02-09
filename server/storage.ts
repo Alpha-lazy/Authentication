@@ -83,6 +83,7 @@ export class MongoStorage implements IStorage {
       id: user._id.toString(),
       email: user.email,
       name: user.name,
+      password:user.password,
       createdAt: user.createdAt
     };
   }
