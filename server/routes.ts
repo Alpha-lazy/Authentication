@@ -15,6 +15,24 @@ declare module 'express' {
 }
 
 export function registerRoutes(app: Express) {
+  // Root endpoint for health check
+  app.get("/", (_req, res) => {
+    res.json({
+      status: "OK",
+      message: "API is running",
+      version: "1.0.0",
+      endpoints: {
+        auth: ["/api/register", "/api/login"],
+        playlists: [
+          "/api/playlists",
+          "/api/playlists/favorite",
+          "/api/playlists/unfavorite/:id",
+          "/api/playlists/favorites"
+        ]
+      }
+    });
+  });
+
   // Auth routes
   app.post("/api/register", async (req, res) => {
     try {
@@ -46,7 +64,7 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  // Playlist routes
+  // Playlist routes - all require authentication
   app.get("/api/playlists", authenticateToken, async (req, res) => {
     try {
       const db = getDB();
@@ -68,13 +86,20 @@ export function registerRoutes(app: Express) {
           return res.status(401).json({ message: "Unauthorized" });
         }
 
-        const userId = new ObjectId(req.user.id);
-        const playlistId = new ObjectId(req.body.playlistId);
-        const { name, imageUrl } = req.body;
+        const userId = req.user.id; // Use the authenticated user's ID directly
+        const { playlistId, name, imageUrl, url, songCount } = req.body;
+
+        // Validate playlistId
+        if (!ObjectId.isValid(playlistId)) {
+          return res.status(400).json({ message: "Invalid playlist ID format" });
+        }
 
         const existing = await db
           .collection("favorites")
-          .findOne({ userId, playlistId });
+          .findOne({ 
+            userId,
+            playlistId: new ObjectId(playlistId)
+          });
 
         if (existing) {
           return res
@@ -85,10 +110,12 @@ export function registerRoutes(app: Express) {
         await db
           .collection("favorites")
           .insertOne({ 
-            userId, 
-            playlistId, 
+            userId, // Store the userId as is (string)
+            playlistId: new ObjectId(playlistId), // Convert playlistId to ObjectId
             name,
             imageUrl,
+            url,
+            songCount,
             createdAt: new Date() 
           });
 
@@ -109,12 +136,15 @@ export function registerRoutes(app: Express) {
           return res.status(401).json({ message: "Unauthorized" });
         }
 
-        const userId = new ObjectId(req.user.id);
+        const userId = req.user.id;
         const playlistId = new ObjectId(req.params.id);
 
         const result = await db
           .collection("favorites")
-          .deleteOne({ userId, playlistId });
+          .deleteOne({ 
+            userId,
+            playlistId
+          });
 
         if (result.deletedCount === 0) {
           return res
@@ -136,28 +166,19 @@ export function registerRoutes(app: Express) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const userId = new ObjectId(req.user.id);
+      const userId = req.user.id;
 
       const favorites = await db
         .collection("favorites")
-        .aggregate([
-          { $match: { userId } },
-          {
-            $lookup: {
-              from: "playlists",
-              localField: "playlistId",
-              foreignField: "_id",
-              as: "playlist",
-            },
-          },
-          { $unwind: "$playlist" },
-        ])
+        .find({ userId })
         .toArray();
 
-      res.json(favorites.map((f) => ({
-        ...f.playlist,
+      res.json(favorites.map(f => ({
+        id: f.playlistId.toString(),
         name: f.name,
-        imageUrl: f.imageUrl
+        url: f.url,
+        imageUrl: f.imageUrl,
+        songCount: f.songCount
       })));
     } catch (error) {
       res.status(500).json({ message: "Error fetching favorites" });
