@@ -3,7 +3,7 @@ import { getDB } from "./db";
 import { ObjectId } from "mongodb";
 import bcrypt from "bcryptjs";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+const JWT_SECRET ="thisisalphamusicappitisanunofficialapp";
 
 export function generateToken(user: any) {
   return jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "7d" });

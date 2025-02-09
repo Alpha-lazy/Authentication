@@ -17,6 +17,8 @@ declare module 'express' {
 export function registerRoutes(app: Express) {
   // Root endpoint for health check
   app.get("/", (_req, res) => {
+    
+    
     res.json({
       status: "OK",
       message: "API is running",
@@ -80,7 +82,7 @@ export function registerRoutes(app: Express) {
     authenticateToken,
     validatePlaylist,
     async (req: Request, res) => {
-      try {
+      try { 
         const db = getDB();
         if (!req.user) {
           return res.status(401).json({ message: "Unauthorized" });
