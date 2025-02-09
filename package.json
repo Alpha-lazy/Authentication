@@ -10,6 +10,7 @@
     "check": "tsc",
     "db:push": "drizzle-kit push",
     "deploy": "vercel deploy --prod"
+    
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
