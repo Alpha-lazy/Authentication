@@ -83,3 +83,5 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
     process.exit(1);
   }
 })();
+  // "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    // "start": "cross-env NODE_ENV=production node dist/index.js",

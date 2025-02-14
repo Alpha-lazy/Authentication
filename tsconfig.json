@@ -18,6 +18,9 @@
     "paths": {
       "@/*": ["./client/src/*"],
       "@shared/*": ["./shared/*"]
-    }
+    },
+    "target": "es6",
+    "outDir": "dist",
+    "rootDir": "server",
   }
 }
