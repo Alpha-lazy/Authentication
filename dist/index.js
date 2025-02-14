@@ -42,6 +42,9 @@ async function registerUser(email, name, password) {
   try {
     const db = getDB();
     const usersCollection = db.collection("users");
+    if (password.length <= 6) {
+      throw new Error("Password must be at least 6 character.");
+    }
     const existingUser = await usersCollection.findOne({ email });
     if (existingUser) {
       throw new Error("User already exists");
