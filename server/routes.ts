@@ -101,7 +101,7 @@ export function registerRoutes(app: Express) {
           .collection("favorites")
           .findOne({ 
             userId,
-            playlistId
+            playlistId:playlistId
           });
 
         if (existing) {
