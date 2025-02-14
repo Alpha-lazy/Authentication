@@ -3,6 +3,7 @@ import { createServer } from "http";
 import { authenticateToken, validatePlaylist } from "./middleware";
 import { getDB } from "./db";
 import { generateToken, registerUser, loginUser } from "./auth";
+import { userSchema } from "@shared/schema";
 // import { ObjectId } from "mongodb";
 
 // Extend Express Request to include user

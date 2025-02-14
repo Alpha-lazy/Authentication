@@ -1,9 +1,10 @@
 import jwt from "jsonwebtoken";
 import { getDB } from "./db";
-import { ObjectId } from "mongodb";
 import bcrypt from "bcryptjs";
- //  "dev": "tsx server/index.ts",
+
 const JWT_SECRET ="thisisalphamusicappitisanunofficialapp";
+
+ //  "dev": "tsx server/index.ts",
 
 export function generateToken(user: any) {
   return jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "7d" });
@@ -19,6 +20,10 @@ export async function registerUser(email: string, name: string, password: string
     const usersCollection = db.collection("users");
 
     const existingUser = await usersCollection.findOne({ email });
+
+    if (password.length <= 6) {
+      throw new Error("Password must be at least 6 character.");
+    }
 
     if (existingUser) {
       throw new Error("User already exists");
@@ -36,6 +41,7 @@ export async function registerUser(email: string, name: string, password: string
     };
 
     const result = await usersCollection.insertOne(newUser);
+    
     return { ...newUser, _id: result.insertedId, password: undefined };
   } catch (error) {
     throw error;

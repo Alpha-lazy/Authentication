@@ -6,7 +6,7 @@ export const userSchema = z.object({
   email: z.string().email(),
   name: z.string(),
   password: z .string({required_error:"password is required"})
-  .min(3,{message:"Password must be at least 3 character."})
+  .min(6,{message:"Password must be at least 6 character."})
   .max(1000,{message:"Password must not be more than 1000 characters."}),
   createdAt: z.date()
 });
