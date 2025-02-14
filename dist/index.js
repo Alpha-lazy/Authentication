@@ -31,7 +31,7 @@ function getDB() {
 
 // server/auth.ts
 import bcrypt from "bcryptjs";
-var JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+var JWT_SECRET = "thisisalphamusicappitisanunofficialapp";
 function generateToken(user) {
   return jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "7d" });
 }
@@ -42,10 +42,10 @@ async function registerUser(email, name, password) {
   try {
     const db = getDB();
     const usersCollection = db.collection("users");
+    const existingUser = await usersCollection.findOne({ email });
     if (password.length <= 6) {
       throw new Error("Password must be at least 6 character.");
     }
-    const existingUser = await usersCollection.findOne({ email });
     if (existingUser) {
       throw new Error("User already exists");
     }
@@ -97,15 +97,14 @@ function authenticateToken(req, res, next) {
   }
 }
 function validatePlaylist(req, res, next) {
-  const { name, url: url2, songCount, imageUrl } = req.body;
-  if (!name || !url2 || !songCount || !imageUrl) {
-    return res.status(400).json({ message: "Missing required playlist fields (name, url, songCount, imageUrl)" });
+  const { name, url: url2, songCount, imageUrl, playlistId } = req.body;
+  if (!name || !url2 || !songCount || !imageUrl || !playlistId) {
+    return res.status(400).json({ message: "Missing required playlist fields (name, url, songCount, imageUrl,playlistId)" });
   }
   next();
 }
 
 // server/routes.ts
-import { ObjectId } from "mongodb";
 function registerRoutes(app2) {
   app2.get("/", (_req, res) => {
     res.json({
@@ -172,7 +171,7 @@ function registerRoutes(app2) {
         const { playlistId, name, imageUrl, url: url2, songCount } = req.body;
         const existing = await db.collection("favorites").findOne({
           userId,
-          playlistId: new ObjectId(playlistId)
+          playlistId
         });
         if (existing) {
           return res.status(400).json({ message: "Playlist already in favorites" });
@@ -180,7 +179,7 @@ function registerRoutes(app2) {
         await db.collection("favorites").insertOne({
           userId,
           // Store the userId as is (string)
-          playlistId: new ObjectId(playlistId),
+          playlistId,
           // Convert playlistId to ObjectId
           name,
           imageUrl,
@@ -204,7 +203,7 @@ function registerRoutes(app2) {
           return res.status(401).json({ message: "Unauthorized" });
         }
         const userId = req.user.id;
-        const playlistId = new ObjectId(req.params.id);
+        const playlistId = req.params.id;
         const result = await db.collection("favorites").deleteOne({
           userId,
           playlistId
@@ -243,8 +242,14 @@ function registerRoutes(app2) {
 
 // server/index.ts
 import cors from "cors";
+var corsConfig = {
+  origin: "*",
+  credential: true,
+  methods: ["POST", "GET", "DELETE", "PUT"]
+};
 var app = express();
-app.use(cors());
+app.options("", cors(corsConfig));
+app.use(cors(corsConfig));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use((req, res, next) => {
