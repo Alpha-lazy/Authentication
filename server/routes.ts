@@ -101,7 +101,7 @@ export function registerRoutes(app: Express) {
           .collection("favorites")
           .findOne({ 
             userId,
-            playlistId: playlistId
+            playlistId
           });
 
         if (existing) {
@@ -114,7 +114,7 @@ export function registerRoutes(app: Express) {
           .collection("favorites")
           .insertOne({ 
             userId, // Store the userId as is (string)
-            playlistId:playlistId, // Convert playlistId to ObjectId
+            playlistId, // Convert playlistId to ObjectId
             name,
             imageUrl,
             url,

@@ -32,10 +32,10 @@ export function authenticateToken(
 }
 
 export function validatePlaylist(req: Request, res: Response, next: NextFunction) {
-  const { name, url, songCount, imageUrl } = req.body;
+  const { name, url, songCount, imageUrl, playlistId } = req.body;
 
-  if (!name || !url || !songCount || !imageUrl) {
-    return res.status(400).json({ message: "Missing required playlist fields (name, url, songCount, imageUrl)" });
+  if (!name || !url || !songCount || !imageUrl || !playlistId) {
+    return res.status(400).json({ message: "Missing required playlist fields (name, url, songCount, imageUrl,playlistId)" });
   }
 
   next();
