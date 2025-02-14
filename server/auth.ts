@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import { getDB } from "./db";
 import { ObjectId } from "mongodb";
 import bcrypt from "bcryptjs";
-
+ //  "dev": "tsx server/index.ts",
 const JWT_SECRET ="thisisalphamusicappitisanunofficialapp";
 
 export function generateToken(user: any) {
