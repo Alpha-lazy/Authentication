@@ -83,16 +83,17 @@ export function registerRoutes(app: Express) {
 
       const userId = req.user.id;
 
-    const { name } = req.body;
+    const { name,songs } = req.body;
+
     const newPlaylist = {
       playlistId : Math.floor(Math.random()*1000),
       name,
       userId,
-      songs: []
+      songs
     };
     // Save to database (e.g., Firebase/Firestore)
     await db.collection('playlists').insertOne(newPlaylist);
-    res.status(500).json("Playlist created successfully");
+    res.status(200).json("Playlist created successfully");
   } catch (error) {
       res.status(500).json({message:"Error to create playlist"})
   }
