@@ -31,7 +31,11 @@ export function registerRoutes(app: Express) {
           "/api/playlists/favorite",
           "/api/playlists/unfavorite/:id",
           "/api/playlists/favorites"
+        ],
+        cretePlaylist:[
+          "/api/create/playlist"
         ]
+
       }
     });
   });

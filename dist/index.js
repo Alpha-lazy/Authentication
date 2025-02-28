@@ -118,6 +118,9 @@ function registerRoutes(app2) {
           "/api/playlists/favorite",
           "/api/playlists/unfavorite/:id",
           "/api/playlists/favorites"
+        ],
+        cretePlaylist: [
+          "/api/create/playlist"
         ]
       }
     });
