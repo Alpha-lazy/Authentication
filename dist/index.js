@@ -120,7 +120,8 @@ function registerRoutes(app2) {
           "/api/playlists/favorites"
         ],
         cretePlaylist: [
-          "/api/create/playlist"
+          "/api/create/playlist",
+          "/api/playlists/add:playlistId"
         ]
       }
     });
@@ -151,26 +152,58 @@ function registerRoutes(app2) {
       res.status(400).json({ message: error.message });
     }
   });
-  app2.post("/api/create/playlist", authenticateToken, async (req, res) => {
-    try {
-      const db = getDB();
-      if (!req.user) {
-        return res.status(401).json({ message: "Unauthorized" });
+  app2.post(
+    "/api/create/playlist",
+    authenticateToken,
+    async (req, res) => {
+      try {
+        const db = getDB();
+        if (!req.user) {
+          return res.status(401).json({ message: "Unauthorized" });
+        }
+        const userId = req.user.id;
+        const { name, songs } = req.body;
+        const newPlaylist = {
+          playlistId: userId + Math.floor(Math.random() * 1e4).toString(),
+          userId,
+          name,
+          songs
+        };
+        await db.collection("playlists").insertOne(newPlaylist);
+        res.status(200).json("Playlist created successfully");
+      } catch (error) {
+        res.status(500).json({ message: "Error to create playlist" });
       }
-      const userId = req.user.id;
-      const { name, songs } = req.body;
-      const newPlaylist = {
-        playlistId: Math.floor(Math.random() * 1e3),
-        name,
-        userId,
-        songs
-      };
-      await db.collection("playlists").insertOne(newPlaylist);
-      res.status(200).json("Playlist created successfully");
-    } catch (error) {
-      res.status(500).json({ message: "Error to create playlist" });
     }
-  });
+  );
+  app2.post(
+    "/api/playlists/add:playlistId",
+    authenticateToken,
+    async (req, res) => {
+      try {
+        const db = getDB();
+        if (!req.user) {
+          return res.status(401).json({ message: "Unauthorized" });
+        }
+        const userId = req.user.id;
+        const playlistId = req.params.playlistId;
+        const { songs } = req.body;
+        const data = await db.collection("playlists").findOne({
+          userId,
+          playlistId
+        });
+        await db.collection("playlists").updateOne(
+          { userId, playlistId },
+          { $set: { songs: [...data?.songs, ...songs], name: "top 50" } },
+          { upsert: true }
+        );
+        res.json({ message: "Songs added successfully" });
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Error to add song" });
+      }
+    }
+  );
   app2.get("/api/playlists", authenticateToken, async (req, res) => {
     try {
       const db = getDB();
@@ -240,25 +273,31 @@ function registerRoutes(app2) {
       }
     }
   );
-  app2.get("/api/playlists/favorites", authenticateToken, async (req, res) => {
-    try {
-      const db = getDB();
-      if (!req.user) {
-        return res.status(401).json({ message: "Unauthorized" });
+  app2.get(
+    "/api/playlists/favorites",
+    authenticateToken,
+    async (req, res) => {
+      try {
+        const db = getDB();
+        if (!req.user) {
+          return res.status(401).json({ message: "Unauthorized" });
+        }
+        const userId = req.user.id;
+        const favorites = await db.collection("favorites").find({ userId }).toArray();
+        res.json(
+          favorites.map((f) => ({
+            id: f.playlistId.toString(),
+            name: f.name,
+            url: f.url,
+            imageUrl: f.imageUrl,
+            songCount: f.songCount
+          }))
+        );
+      } catch (error) {
+        res.status(500).json({ message: "Error fetching favorites" });
       }
-      const userId = req.user.id;
-      const favorites = await db.collection("favorites").find({ userId }).toArray();
-      res.json(favorites.map((f) => ({
-        id: f.playlistId.toString(),
-        name: f.name,
-        url: f.url,
-        imageUrl: f.imageUrl,
-        songCount: f.songCount
-      })));
-    } catch (error) {
-      res.status(500).json({ message: "Error fetching favorites" });
     }
-  });
+  );
   const httpServer = createServer(app2);
   return httpServer;
 }

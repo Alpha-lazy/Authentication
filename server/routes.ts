@@ -7,7 +7,7 @@ import { userSchema } from "@shared/schema";
 // import { ObjectId } from "mongodb";
 
 // Extend Express Request to include user
-declare module 'express' {
+declare module "express" {
   interface Request {
     user?: {
       id: string;
@@ -18,8 +18,6 @@ declare module 'express' {
 export function registerRoutes(app: Express) {
   // Root endpoint for health check
   app.get("/", (_req, res) => {
-    
-    
     res.json({
       status: "OK",
       message: "API is running",
@@ -30,13 +28,13 @@ export function registerRoutes(app: Express) {
           "/api/playlists",
           "/api/playlists/favorite",
           "/api/playlists/unfavorite/:id",
-          "/api/playlists/favorites"
+          "/api/playlists/favorites",
         ],
-        cretePlaylist:[
-          "/api/create/playlist"
-        ]
-
-      }
+        cretePlaylist: [
+          "/api/create/playlist",
+          "/api/playlists/add:playlistId"
+        ],
+      },
     });
   });
 
@@ -45,7 +43,9 @@ export function registerRoutes(app: Express) {
     try {
       const { email, name, password } = req.body;
       if (!email || !name || !password) {
-        return res.status(400).json({ message: "Email, name, and password are required" });
+        return res
+          .status(400)
+          .json({ message: "Email, name, and password are required" });
       }
 
       const user = await registerUser(email, name, password);
@@ -60,7 +60,9 @@ export function registerRoutes(app: Express) {
     try {
       const { email, password } = req.body;
       if (!email || !password) {
-        return res.status(400).json({ message: "Email and password are required" });
+        return res
+          .status(400)
+          .json({ message: "Email and password are required" });
       }
 
       const user = await loginUser(email, password);
@@ -71,33 +73,69 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  app.post(
+    "/api/create/playlist",
+    authenticateToken,
+    async (req: Request, res) => {
+      try {
+        const db = getDB();
+        if (!req.user) {
+          return res.status(401).json({ message: "Unauthorized" });
+        }
 
-  app.post('/api/create/playlist',authenticateToken, async (req: Request, res) => {
-    try {
-      
- 
-      const db = getDB();
-      if (!req.user) {
-        return res.status(401).json({ message: "Unauthorized" });
+        const userId = req.user.id;
+
+        const { name, songs } = req.body;
+
+        const newPlaylist = {
+          playlistId: userId + Math.floor(Math.random() * 10000).toString(),
+          userId,
+          name,
+          songs,
+        };
+        await db.collection("playlists").insertOne(newPlaylist);
+        res.status(200).json("Playlist created successfully");
+      } catch (error) {
+        res.status(500).json({ message: "Error to create playlist" });
       }
+    }
+  );
 
-      const userId = req.user.id;
+  app.post(
+    "/api/playlists/add:playlistId",
+    authenticateToken,
+    async (req: Request, res) => {
+      try {
+        const db = getDB();
+        if (!req.user) {
+          return res.status(401).json({ message: "Unauthorized" });
+        }
 
-    const { name,songs } = req.body;
+        const userId = req.user.id; // Use the authenticated user's ID directly
+        const playlistId = req.params.playlistId;
+        const { songs } = req.body;
 
-    const newPlaylist = {
-      playlistId : Math.floor(Math.random()*1000),
-      name,
-      userId,
-      songs
-    };
-    // Save to database (e.g., Firebase/Firestore)
-    await db.collection('playlists').insertOne(newPlaylist);
-    res.status(200).json("Playlist created successfully");
-  } catch (error) {
-      res.status(500).json({message:"Error to create playlist"})
-  }
-  });
+        const data = await db.collection("playlists").findOne({
+          userId,
+          playlistId,
+        });
+
+        await db
+          .collection("playlists")
+          .updateOne(
+            { userId, playlistId },
+            { $set: { songs: [...data?.songs, ...songs], name: "top 50" } },
+            { upsert: true }
+          );
+
+        res.json({ message: "Songs added successfully" });
+      } catch (error) {
+        console.log(error);
+
+        res.status(500).json({ message: "Error to add song" });
+      }
+    }
+  );
 
   // Playlist routes - all require authentication
   app.get("/api/playlists", authenticateToken, async (req, res) => {
@@ -115,7 +153,7 @@ export function registerRoutes(app: Express) {
     authenticateToken,
     validatePlaylist,
     async (req: Request, res) => {
-      try { 
+      try {
         const db = getDB();
         if (!req.user) {
           return res.status(401).json({ message: "Unauthorized" });
@@ -129,12 +167,10 @@ export function registerRoutes(app: Express) {
         //   return res.status(400).json({ message: "Invalid playlist ID format" });
         // }
 
-        const existing = await db
-          .collection("favorites")
-          .findOne({ 
-            userId,
-            playlistId:playlistId
-          });
+        const existing = await db.collection("favorites").findOne({
+          userId: userId,
+          playlistId: playlistId,
+        });
 
         if (existing) {
           return res
@@ -142,17 +178,15 @@ export function registerRoutes(app: Express) {
             .json({ message: "Playlist already in favorites" });
         }
 
-        await db
-          .collection("favorites")
-          .insertOne({ 
-            userId, // Store the userId as is (string)
-            playlistId, // Convert playlistId to ObjectId
-            name,
-            imageUrl,
-            url,
-            songCount,
-            createdAt: new Date() 
-          });
+        await db.collection("favorites").insertOne({
+          userId, // Store the userId as is (string)
+          playlistId, // Convert playlistId to ObjectId
+          name,
+          imageUrl,
+          url,
+          songCount,
+          createdAt: new Date(),
+        });
 
         res.json({ message: "Added to favorites" });
       } catch (error) {
@@ -174,12 +208,10 @@ export function registerRoutes(app: Express) {
         const userId = req.user.id;
         const playlistId = req.params.id;
 
-        const result = await db
-          .collection("favorites")
-          .deleteOne({ 
-            userId,
-            playlistId
-          });
+        const result = await db.collection("favorites").deleteOne({
+          userId,
+          playlistId,
+        });
 
         if (result.deletedCount === 0) {
           return res
@@ -194,37 +226,41 @@ export function registerRoutes(app: Express) {
     }
   );
 
-  app.get("/api/playlists/favorites", authenticateToken, async (req: Request, res) => {
-    try {
-      const db = getDB();
-      if (!req.user) {
-        return res.status(401).json({ message: "Unauthorized" });
+  app.get(
+    "/api/playlists/favorites",
+    authenticateToken,
+    async (req: Request, res) => {
+      try {
+        const db = getDB();
+        if (!req.user) {
+          return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        const userId = req.user.id;
+
+        const favorites = await db
+          .collection("favorites")
+          .find({ userId })
+          .toArray();
+
+        res.json(
+          favorites.map((f) => ({
+            id: f.playlistId.toString(),
+            name: f.name,
+            url: f.url,
+            imageUrl: f.imageUrl,
+            songCount: f.songCount,
+          }))
+        );
+      } catch (error) {
+        res.status(500).json({ message: "Error fetching favorites" });
       }
-
-      const userId = req.user.id;
-
-      const favorites = await db
-        .collection("favorites")
-        .find({ userId })
-        .toArray();
-
-      res.json(favorites.map(f => ({
-        id: f.playlistId.toString(),
-        name: f.name,
-        url: f.url,
-        imageUrl: f.imageUrl,
-        songCount: f.songCount
-      })));
-    } catch (error) {
-      res.status(500).json({ message: "Error fetching favorites" });
     }
-  });
-
+  );
 
   // Create playlist
 
   // POST /playlist
-
 
   const httpServer = createServer(app);
   return httpServer;
