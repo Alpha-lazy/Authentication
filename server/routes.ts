@@ -67,6 +67,33 @@ export function registerRoutes(app: Express) {
     }
   });
 
+
+  app.post('/api/create/playlist',authenticateToken, async (req: Request, res) => {
+    try {
+      
+ 
+      const db = getDB();
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const userId = req.user.id;
+
+    const { name } = req.body;
+    const newPlaylist = {
+      playlistId : Math.floor(Math.random()*1000),
+      name,
+      userId,
+      songs: []
+    };
+    // Save to database (e.g., Firebase/Firestore)
+    await db.collection('playlists').insertOne(newPlaylist);
+    res.status(500).json("Playlist created successfully");
+  } catch (error) {
+      res.status(500).json({message:"Error to create playlist"})
+  }
+  });
+
   // Playlist routes - all require authentication
   app.get("/api/playlists", authenticateToken, async (req, res) => {
     try {
@@ -187,6 +214,12 @@ export function registerRoutes(app: Express) {
       res.status(500).json({ message: "Error fetching favorites" });
     }
   });
+
+
+  // Create playlist
+
+  // POST /playlist
+
 
   const httpServer = createServer(app);
   return httpServer;

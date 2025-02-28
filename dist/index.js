@@ -148,6 +148,26 @@ function registerRoutes(app2) {
       res.status(400).json({ message: error.message });
     }
   });
+  app2.post("/api/create/playlist", authenticateToken, async (req, res) => {
+    try {
+      const db = getDB();
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      const userId = req.user.id;
+      const { name } = req.body;
+      const newPlaylist = {
+        playlistId: Math.floor(Math.random() * 1e3),
+        name,
+        userId,
+        songs: []
+      };
+      await db.collection("playlists").insertOne(newPlaylist);
+      res.status(500).json("Playlist created successfully");
+    } catch (error) {
+      res.status(500).json({ message: "Error to create playlist" });
+    }
+  });
   app2.get("/api/playlists", authenticateToken, async (req, res) => {
     try {
       const db = getDB();

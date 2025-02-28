@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { object, string, z } from "zod";
 
 // User schema
 export const userSchema = z.object({
@@ -48,6 +48,23 @@ export const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
 });
+
+
+// Create Playlist
+const songSchema = z.object({
+  songId: z.string()
+});
+
+export const createPlaylistSchema = z.object({
+  playlistId: z.string(),
+  name: z.string(),
+  userId: z.string(),
+  songs: z.array(songSchema).optional().default([])
+
+
+  
+});
+
 
 // Export types
 export type User = z.infer<typeof userSchema>;
