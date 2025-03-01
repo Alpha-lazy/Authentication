@@ -59,8 +59,8 @@ export const createPlaylistSchema = z.object({
   playlistId: z.string(),
   name: z.string(),
   userId: z.string(),
-  songs: z.array(songSchema).optional().default([])
-
+  songs: z.array(songSchema).optional().default([]),
+  desc:z.string()
 
   
 });

@@ -121,7 +121,10 @@ function registerRoutes(app2) {
         ],
         cretePlaylist: [
           "/api/create/playlist",
-          "/api/playlists/add:playlistId"
+          "/api/all/playlist",
+          "/api/remove/playlist:playlistId",
+          "/api/playlists/add/songs:playlistId",
+          "/api/playlists/remove/songs:playlistId"
         ]
       }
     });
@@ -162,22 +165,59 @@ function registerRoutes(app2) {
           return res.status(401).json({ message: "Unauthorized" });
         }
         const userId = req.user.id;
-        const { name, songs } = req.body;
+        const { name, songs, desc } = req.body;
         const newPlaylist = {
           playlistId: userId + Math.floor(Math.random() * 1e4).toString(),
           userId,
           name,
+          desc,
           songs
         };
         await db.collection("playlists").insertOne(newPlaylist);
-        res.status(200).json("Playlist created successfully");
+        res.status(200).json({ message: "Playlist created successfully" });
       } catch (error) {
         res.status(500).json({ message: "Error to create playlist" });
       }
     }
   );
+  app2.get(
+    "/api/all/playlist",
+    authenticateToken,
+    async (req, res) => {
+      try {
+        const db = getDB();
+        if (!req.user) {
+          return res.status(401).json({ message: "Unauthorized" });
+        }
+        const userId = req.user.id;
+        const playlist = await db.collection("playlists").find({
+          userId
+        }).toArray();
+        res.status(200).json({ playlist });
+      } catch (error) {
+        res.status(500).json({ message: "Error to get playlist" });
+      }
+    }
+  );
+  app2.delete(
+    "/api/remove/playlist:playlistId",
+    authenticateToken,
+    async (req, res) => {
+      const db = getDB();
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      const userId = req.user.id;
+      const playlistId = req.params.playlistId;
+      await db.collection("playlists").deleteOne({
+        userId,
+        playlistId
+      });
+      res.status(200).json({ message: "Playlist deleted successfully" });
+    }
+  );
   app2.post(
-    "/api/playlists/add:playlistId",
+    "/api/playlists/add/songs:playlistId",
     authenticateToken,
     async (req, res) => {
       try {
@@ -197,7 +237,41 @@ function registerRoutes(app2) {
           { $set: { songs: [...data?.songs, ...songs], name: "top 50" } },
           { upsert: true }
         );
-        res.json({ message: "Songs added successfully" });
+        res.json({ message: "Song added successfully" });
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Error to add song" });
+      }
+    }
+  );
+  app2.post(
+    "/api/playlists/remove/songs:playlistId",
+    authenticateToken,
+    async (req, res) => {
+      try {
+        const db = getDB();
+        if (!req.user) {
+          return res.status(401).json({ message: "Unauthorized" });
+        }
+        const userId = req.user.id;
+        const playlistId = req.params.playlistId;
+        const { songs } = req.body;
+        const data = await db.collection("playlists").findOne({
+          userId,
+          playlistId
+        });
+        if (data) {
+          const index = data?.songs.indexOf(songs);
+          if (index > -1) {
+            data?.songs.splice(index, 1);
+            await db.collection("playlists").updateOne(
+              { userId, playlistId },
+              { $set: { songs: data?.songs, name: "top 50" } },
+              { upsert: true }
+            );
+          }
+          res.json({ message: "Song remove successfully" });
+        }
       } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Error to add song" });
