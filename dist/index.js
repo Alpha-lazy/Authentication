@@ -165,13 +165,13 @@ function registerRoutes(app2) {
           return res.status(401).json({ message: "Unauthorized" });
         }
         const userId = req.user.id;
-        const { name, songs, desc } = req.body;
+        const { name, desc } = req.body;
         const newPlaylist = {
           playlistId: userId + Math.floor(Math.random() * 1e4).toString(),
           userId,
           name,
           desc,
-          songs
+          songs: []
         };
         await db.collection("playlists").insertOne(newPlaylist);
         res.status(200).json({ message: "Playlist created successfully" });

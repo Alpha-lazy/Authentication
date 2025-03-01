@@ -91,14 +91,14 @@ export function registerRoutes(app: Express) {
 
         const userId = req.user.id;
 
-        const { name, songs,desc } = req.body;
+        const { name,desc } = req.body;
 
         const newPlaylist = {
           playlistId: userId + Math.floor(Math.random() * 10000).toString(),
           userId,
           name,
           desc,
-          songs,
+          songs:[],
         };
         await db.collection("playlists").insertOne(newPlaylist);
         res.status(200).json({message:"Playlist created successfully"});
