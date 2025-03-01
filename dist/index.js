@@ -256,7 +256,7 @@ function registerRoutes(app2) {
         });
         await db.collection("playlists").updateOne(
           { userId, playlistId },
-          { $set: { songs: [...data?.songs, ...songs], name: "top 50" } },
+          { $set: { songs: [...data?.songs, ...songs] } },
           { upsert: true }
         );
         res.json({ message: "Song added successfully" });
