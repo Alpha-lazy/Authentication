@@ -248,7 +248,7 @@ export function registerRoutes(app: Express) {
             .collection("playlists")
             .updateOne(
               { userId, playlistId },
-              { $set: { songs:data?.songs, name: "top 50" } },
+              { $set: { songs:data?.songs} },
               { upsert: true }
             )
 

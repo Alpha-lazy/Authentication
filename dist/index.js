@@ -288,7 +288,7 @@ function registerRoutes(app2) {
             data?.songs.splice(index, 1);
             await db.collection("playlists").updateOne(
               { userId, playlistId },
-              { $set: { songs: data?.songs, name: "top 50" } },
+              { $set: { songs: data?.songs } },
               { upsert: true }
             );
           }
