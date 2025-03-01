@@ -122,6 +122,7 @@ function registerRoutes(app2) {
         cretePlaylist: [
           "/api/create/playlist",
           "/api/all/playlist",
+          "/api/playlist/track:playlistId",
           "/api/remove/playlist:playlistId",
           "/api/playlists/add/songs:playlistId",
           "/api/playlists/remove/songs:playlistId"
@@ -192,6 +193,27 @@ function registerRoutes(app2) {
         const userId = req.user.id;
         const playlist = await db.collection("playlists").find({
           userId
+        }).toArray();
+        res.status(200).json({ playlist });
+      } catch (error) {
+        res.status(500).json({ message: "Error to get playlist" });
+      }
+    }
+  );
+  app2.get(
+    "/api/playlist/track:playlistId",
+    authenticateToken,
+    async (req, res) => {
+      try {
+        const db = getDB();
+        if (!req.user) {
+          return res.status(401).json({ message: "Unauthorized" });
+        }
+        const userId = req.user.id;
+        const playlistId = req.params.playlistId;
+        const playlist = await db.collection("playlists").find({
+          userId,
+          playlistId
         }).toArray();
         res.status(200).json({ playlist });
       } catch (error) {
