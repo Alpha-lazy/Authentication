@@ -166,12 +166,13 @@ function registerRoutes(app2) {
           return res.status(401).json({ message: "Unauthorized" });
         }
         const userId = req.user.id;
-        const { name, desc } = req.body;
+        const { name, desc, imageUrl } = req.body;
         const newPlaylist = {
           playlistId: userId + Math.floor(Math.random() * 1e4).toString(),
           userId,
           name,
           desc,
+          imageUrl,
           songs: []
         };
         await db.collection("playlists").insertOne(newPlaylist);
@@ -249,14 +250,14 @@ function registerRoutes(app2) {
         }
         const userId = req.user.id;
         const playlistId = req.params.playlistId;
-        const { songs } = req.body;
+        const { songs, imageUrl } = req.body;
         const data = await db.collection("playlists").findOne({
           userId,
           playlistId
         });
         await db.collection("playlists").updateOne(
           { userId, playlistId },
-          { $set: { songs: [...data?.songs, ...songs] } },
+          { $set: { songs: [...data?.songs, ...songs], imageUrl } },
           { upsert: true }
         );
         res.json({ message: "Song added successfully" });

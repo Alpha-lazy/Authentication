@@ -92,13 +92,14 @@ export function registerRoutes(app: Express) {
 
         const userId = req.user.id;
 
-        const { name,desc } = req.body;
+        const { name,desc,imageUrl } = req.body;
 
         const newPlaylist = {
           playlistId: userId + Math.floor(Math.random() * 10000).toString(),
           userId,
           name,
           desc,
+          imageUrl,
           songs:[],
         };
         await db.collection("playlists").insertOne(newPlaylist);
@@ -194,7 +195,7 @@ export function registerRoutes(app: Express) {
 
         const userId = req.user.id; // Use the authenticated user's ID directly
         const playlistId = req.params.playlistId;
-        const { songs  } = req.body;
+        const { songs, imageUrl } = req.body;
 
         const data = await db.collection("playlists").findOne({
           userId,
@@ -205,7 +206,7 @@ export function registerRoutes(app: Express) {
           .collection("playlists")
           .updateOne(
             { userId, playlistId },
-            { $set: { songs: [...data?.songs, ...songs]} },
+            { $set: { songs: [...data?.songs, ...songs],imageUrl:imageUrl} },
             { upsert: true }
           );
 
