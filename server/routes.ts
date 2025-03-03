@@ -219,9 +219,8 @@ export function registerRoutes(app: Express) {
           playlistId
         });
       
-        console.log(songs);
         
-     if (imageUrl.length === 0) {
+     if (imageUrl.length == 0) {
       await db
       .collection("playlists")
       .updateOne(
