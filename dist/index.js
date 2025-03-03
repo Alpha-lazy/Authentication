@@ -167,15 +167,27 @@ function registerRoutes(app2) {
         }
         const userId = req.user.id;
         const { name, desc, imageUrl } = req.body;
-        const newPlaylist = {
-          playlistId: userId + Math.floor(Math.random() * 1e4).toString(),
-          userId,
-          name,
-          desc,
-          imageUrl,
-          songs: []
-        };
-        await db.collection("playlists").insertOne(newPlaylist);
+        if (imageUrl) {
+          const newPlaylist = {
+            playlistId: userId + Math.floor(Math.random() * 1e4).toString(),
+            userId,
+            name,
+            desc,
+            imageUrl,
+            songs: []
+          };
+          await db.collection("playlists").insertOne(newPlaylist);
+        } else {
+          const newPlaylist = {
+            playlistId: userId + Math.floor(Math.random() * 1e4).toString(),
+            userId,
+            name,
+            desc,
+            imageUrl: [],
+            songs: []
+          };
+          await db.collection("playlists").insertOne(newPlaylist);
+        }
         res.status(200).json({ message: "Playlist created successfully" });
       } catch (error) {
         res.status(500).json({ message: "Error to create playlist" });
@@ -255,11 +267,20 @@ function registerRoutes(app2) {
           userId,
           playlistId
         });
-        await db.collection("playlists").updateOne(
-          { userId, playlistId },
-          { $set: { songs: [...data?.songs, ...songs], imageUrl } },
-          { upsert: true }
-        );
+        console.log(songs);
+        if (imageUrl.length === 0) {
+          await db.collection("playlists").updateOne(
+            { userId, playlistId },
+            { $set: { songs: [...data?.songs, ...songs], imageUrl: [...data?.imageUrl, ...imageUrl] } },
+            { upsert: true }
+          );
+        } else {
+          await db.collection("playlists").updateOne(
+            { userId, playlistId },
+            { $set: { songs: [...data?.songs, ...songs], imageUrl } },
+            { upsert: true }
+          );
+        }
         res.json({ message: "Song added successfully" });
       } catch (error) {
         console.log(error);

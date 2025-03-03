@@ -55,11 +55,15 @@ const songSchema = z.object({
   songId: z.string()
 });
 
+const imageSchema = z.object({
+  imageUrl:z.string()
+})
+
 export const createPlaylistSchema = z.object({
   playlistId: z.string(),
   name: z.string(),
   userId: z.string(),
-  imageUrl: z.string(),
+  imageUrl: z.array(imageSchema).optional().default([]),
   songs: z.array(songSchema).optional().default([]),
   desc:z.string()
 

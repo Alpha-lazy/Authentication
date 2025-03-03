@@ -4,6 +4,7 @@ import { authenticateToken, validatePlaylist } from "./middleware";
 import { getDB } from "./db";
 import { generateToken, registerUser, loginUser } from "./auth";
 import { userSchema } from "@shared/schema";
+import { log } from "./vite";
 // import { ObjectId } from "mongodb";
 
 // Extend Express Request to include user
@@ -94,15 +95,31 @@ export function registerRoutes(app: Express) {
 
         const { name,desc,imageUrl } = req.body;
 
-        const newPlaylist = {
-          playlistId: userId + Math.floor(Math.random() * 10000).toString(),
-          userId,
-          name,
-          desc,
-          imageUrl,
-          songs:[],
-        };
-        await db.collection("playlists").insertOne(newPlaylist);
+    
+
+        if (imageUrl) {
+          const newPlaylist = {
+            playlistId: userId + Math.floor(Math.random() * 10000).toString(),
+            userId,
+            name,
+            desc,
+            imageUrl,
+            songs:[],
+          };
+          await db.collection("playlists").insertOne(newPlaylist);
+        }
+
+        else{
+          const newPlaylist = {
+            playlistId: userId + Math.floor(Math.random() * 10000).toString(),
+            userId,
+            name,
+            desc,
+            imageUrl:[],
+            songs:[],
+          };
+          await db.collection("playlists").insertOne(newPlaylist);
+        }
         res.status(200).json({message:"Playlist created successfully"});
       } catch (error) {
         res.status(500).json({ message: "Error to create playlist" });
@@ -201,7 +218,20 @@ export function registerRoutes(app: Express) {
           userId,
           playlistId
         });
+      
+        console.log(songs);
+        
+     if (imageUrl.length === 0) {
+      await db
+      .collection("playlists")
+      .updateOne(
+        { userId, playlistId },
+        { $set: { songs: [...data?.songs, ...songs],imageUrl:[...data?.imageUrl, ...imageUrl],} },
+        { upsert: true }
+      );
 
+     }
+     else{
         await db
           .collection("playlists")
           .updateOne(
@@ -209,7 +239,7 @@ export function registerRoutes(app: Express) {
             { $set: { songs: [...data?.songs, ...songs],imageUrl:imageUrl} },
             { upsert: true }
           );
-
+        }
         res.json({ message: "Song added successfully" });
       } catch (error) {
         console.log(error);
