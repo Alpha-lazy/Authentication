@@ -268,7 +268,7 @@ function registerRoutes(app2) {
           playlistId
         });
         console.log(imageUrl);
-        if (imageUrl.length < 4 && imageUrl.length > 1) {
+        if (imageUrl.length < 4) {
           await db.collection("playlists").updateOne(
             { userId, playlistId },
             { $set: { songs: [...data?.songs, ...songs], imageUrl: [...data?.imageUrl, ...imageUrl] } },
@@ -299,7 +299,7 @@ function registerRoutes(app2) {
         }
         const userId = req.user.id;
         const playlistId = req.params.playlistId;
-        const { songs } = req.body;
+        const { songs, imageUrl } = req.body;
         const data = await db.collection("playlists").findOne({
           userId,
           playlistId
@@ -310,7 +310,7 @@ function registerRoutes(app2) {
             data?.songs.splice(index, 1);
             await db.collection("playlists").updateOne(
               { userId, playlistId },
-              { $set: { songs: data?.songs } },
+              { $set: { songs: data?.songs, imageUrl: data?.imageUrl.filter((img) => img !== imageUrl) } },
               { upsert: true }
             );
           }
