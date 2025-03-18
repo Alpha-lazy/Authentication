@@ -267,7 +267,9 @@ function registerRoutes(app2) {
           userId,
           playlistId
         });
-        if (imageUrl.length == 0) {
+        console.log(imageUrl);
+        if (imageUrl.length < 4) {
+          console.log("length is zero");
           await db.collection("playlists").updateOne(
             { userId, playlistId },
             { $set: { songs: [...data?.songs, ...songs], imageUrl: [...data?.imageUrl, ...imageUrl] } },
