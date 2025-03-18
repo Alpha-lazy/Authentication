@@ -221,7 +221,7 @@ export function registerRoutes(app: Express) {
       
         console.log(imageUrl);
         
-     if (imageUrl.length  < 4 && imageUrl.length !== 1) {
+     if (imageUrl.length  < 4 && imageUrl.length >1) {
       
       await db
       .collection("playlists")
