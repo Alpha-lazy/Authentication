@@ -153,7 +153,7 @@ export function registerRoutes(app: Express) {
 
   // get one playlist 
   app.get(
-    "/api/playlist/track:playlistId",
+    "/api/playlist:playlistId",
     authenticateToken,
     async (req: Request, res) => {
       try {
@@ -168,6 +168,34 @@ export function registerRoutes(app: Express) {
        const playlist = await db.collection("playlists").find({
             userId,
             playlistId      
+       }).toArray()
+        
+      res.status(200).json({playlist})
+      } catch (error) {
+        res.status(500).json({ message: "Error to get playlist" });
+      }
+    }
+  );
+
+  // Get playlists by songs id 
+  app.get(
+    "/api/get/playlist:playlistId",
+    authenticateToken,
+    async (req: Request, res) => {
+      try {
+        const db = getDB();
+        if (!req.user) {
+          return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        const userId = req.user.id;
+        const songs = req.body.songs;
+        const playlistId = req.params.playlistId
+
+       const playlist = await db.collection("playlists").find({
+            userId,
+            playlistId,
+            songs:songs      
        }).toArray()
         
       res.status(200).json({playlist})

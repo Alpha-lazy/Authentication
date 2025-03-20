@@ -214,7 +214,7 @@ function registerRoutes(app2) {
     }
   );
   app2.get(
-    "/api/playlist/track:playlistId",
+    "/api/playlist:playlistId",
     authenticateToken,
     async (req, res) => {
       try {
@@ -227,6 +227,29 @@ function registerRoutes(app2) {
         const playlist = await db.collection("playlists").find({
           userId,
           playlistId
+        }).toArray();
+        res.status(200).json({ playlist });
+      } catch (error) {
+        res.status(500).json({ message: "Error to get playlist" });
+      }
+    }
+  );
+  app2.get(
+    "/api/get/playlist:playlistId",
+    authenticateToken,
+    async (req, res) => {
+      try {
+        const db = getDB();
+        if (!req.user) {
+          return res.status(401).json({ message: "Unauthorized" });
+        }
+        const userId = req.user.id;
+        const songs = req.body.songs;
+        const playlistId = req.params.playlistId;
+        const playlist = await db.collection("playlists").find({
+          userId,
+          playlistId,
+          songs
         }).toArray();
         res.status(200).json({ playlist });
       } catch (error) {
