@@ -34,7 +34,8 @@ export function registerRoutes(app: Express) {
         cretePlaylist: [
           "/api/create/playlist",
           "/api/all/playlist",
-          "/api/playlist/track:playlistId",
+          "/api/playlist:playlistId",
+          "/api/get/playlists:songId",
           "/api/remove/playlist:playlistId",
           "/api/playlists/add/songs:playlistId",
           "/api/playlists/remove/songs:playlistId",
@@ -179,7 +180,7 @@ export function registerRoutes(app: Express) {
 
   // Get playlists by songs id 
   app.get(
-    "/api/get/playlist:playlistId",
+    "/api/get/playlists:songId",
     authenticateToken,
     async (req: Request, res) => {
       try {
@@ -189,12 +190,18 @@ export function registerRoutes(app: Express) {
         }
 
         const userId = req.user.id;
-        const songs = req.body.songs;
-        const playlistId = req.params.playlistId
+        const songId = req.params.songId
+        console.log(songId);
+        
+
+        if (!songId) {
+          return res.status(400).json({ message: "Song ID is required" });
+        }
+        
 
        const playlist = await db.collection("playlists").find({
             userId,
-            songs:songs      
+            songs:songId      
        }).toArray()
         
       res.status(200).json({playlist})
