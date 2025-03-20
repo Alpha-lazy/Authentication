@@ -248,7 +248,6 @@ function registerRoutes(app2) {
         const playlistId = req.params.playlistId;
         const playlist = await db.collection("playlists").find({
           userId,
-          playlistId,
           songs
         }).toArray();
         res.status(200).json({ playlist });

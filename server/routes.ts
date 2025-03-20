@@ -194,7 +194,6 @@ export function registerRoutes(app: Express) {
 
        const playlist = await db.collection("playlists").find({
             userId,
-            playlistId,
             songs:songs      
        }).toArray()
         
