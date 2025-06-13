@@ -3,9 +3,27 @@ import { createServer } from "http";
 import { authenticateToken, validatePlaylist } from "./middleware";
 import { getDB } from "./db";
 import { generateToken, registerUser, loginUser } from "./auth";
-import { userSchema } from "@shared/schema";
-import { log } from "./vite";
-// import { ObjectId } from "mongodb";
+import axios from 'axios';
+import { log } from "console";
+
+
+interface GeneratePlaylistRequest {
+  prompt: string;
+}
+
+interface Song {
+  title: string;
+  artist: string;
+  genre: string;
+  language: string;
+}
+
+const MODELS = {
+  TEXT_GENERATION: 'tiiuae/falcon-7b-instruct',
+  MUSIC_RECOMMENDATION: 'sander-wood/spotify-recommendations'
+};
+const HUGGINGFACE_API_KEY = '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';
+const MODEL_NAME = 'mistralai/Mixtral-8x7B-Instruct-v0.1';
 
 // Extend Express Request to include user
 declare module "express" {
@@ -356,7 +374,7 @@ export function registerRoutes(app: Express) {
         }
 
         const userId = req.user.id; // Use the authenticated user's ID directly
-        const { playlistId, name, imageUrl, url, songCount } = req.body;
+        const { playlistId, name, imageUrl, url, songCount,type } = req.body;
 
         // Validate playlistId
         // if (!ObjectId.isValid(playlistId)) {
@@ -381,6 +399,7 @@ export function registerRoutes(app: Express) {
           imageUrl,
           url,
           songCount,
+          type,
           createdAt: new Date(),
         });
 
@@ -454,10 +473,79 @@ export function registerRoutes(app: Express) {
     }
   );
 
-  // Create playlist
+  // Generate playlist
 
-  // POST /playlist
+  app.post('/api/generate-playlist', async (req, res) => {
+    const { prompt } = req.body;
+  
+    try {
+      // Use FLAN-T5 model for better results
+      const response = await axios.post(
+        `https://api-inference.huggingface.co/models/${MODELS.TEXT_GENERATION}`,
+        {
+          inputs: `Generate 30 real songs for a playlist. Format exactly like this:
+        "Lose Yourself by Eminem"
+        "Eye of the Tiger by Survivor"
+        "Stronger by Kanye West"
+        Prompt: ${prompt}`,
+          parameters: {
+            max_length: 100,
+            truncation: true,
+            padding: 'max_length',
+            batch_size: 1  // Ensure batch size is 1
+          }
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${HUGGINGFACE_API_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+  
+      // Parse the response
+      const generatedText = response.data.generated_text;
+      const tracks = generatedText
+        // .filter(line => line.trim())
+        // .slice(0, 5) // Get first 5 items
+        // .map((line, index) => {
+        //   const match = line.match(/"?(.+?) by (.+?)"?$/);
+        //   return match ? { 
+        //     title: match[1].trim(), 
+        //     artist: match[2].trim() 
+        //   } : null;
+        // })
+        // .filter(Boolean);
+  console.log(response);
+  
+      res.json({ playlist: tracks });
+    } catch (err) {
+      const error = err as {
+        response?: {
+          data?: {
+            error?: string | string[];
+          };
+          status?: number;
+        };
+        message?: string;
+      };
+      console.error('Hugging Face Error:', error.response?.data || error.message);
+    
+      // Handle specific Hugging Face errors
+      const hfError = error.response?.data?.error || [];
+      const errorMessage = hfError || 'Failed to generate playlist';
+      
+      res.status(500).json({ 
+        error: errorMessage,
+        solution: errorMessage.includes('permissions') 
+          ? 'Accept model terms at https://huggingface.co/google/flan-t5-xxl' 
+          : undefined
+      });
+    }
+  });
 
+
+  
   const httpServer = createServer(app);
   return httpServer;
 }

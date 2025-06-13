@@ -35,6 +35,7 @@ export const favoriteSchema = z.object({
   playlistId: z.string(),
   name: z.string(),
   imageUrl: z.string(),
+  type: z.string(),
   createdAt: z.date()
 });
 
