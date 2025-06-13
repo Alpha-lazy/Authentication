@@ -105,6 +105,12 @@ function validatePlaylist(req, res, next) {
 }
 
 // server/routes.ts
+import axios from "axios";
+var MODELS = {
+  TEXT_GENERATION: "tiiuae/falcon-7b-instruct",
+  MUSIC_RECOMMENDATION: "sander-wood/spotify-recommendations"
+};
+var HUGGINGFACE_API_KEY = "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";
 function registerRoutes(app2) {
   app2.get("/", (_req, res) => {
     res.json({
@@ -368,7 +374,7 @@ function registerRoutes(app2) {
           return res.status(401).json({ message: "Unauthorized" });
         }
         const userId = req.user.id;
-        const { playlistId, name, imageUrl, url: url2, songCount } = req.body;
+        const { playlistId, name, imageUrl, url: url2, songCount, type } = req.body;
         const existing = await db.collection("favorites").findOne({
           userId,
           playlistId
@@ -385,6 +391,7 @@ function registerRoutes(app2) {
           imageUrl,
           url: url2,
           songCount,
+          type,
           createdAt: /* @__PURE__ */ new Date()
         });
         res.json({ message: "Added to favorites" });
@@ -442,6 +449,47 @@ function registerRoutes(app2) {
       }
     }
   );
+  app2.post("/api/generate-playlist", async (req, res) => {
+    const { prompt } = req.body;
+    try {
+      const response = await axios.post(
+        `https://api-inference.huggingface.co/models/${MODELS.TEXT_GENERATION}`,
+        {
+          inputs: `Generate 30 real songs for a playlist. Format exactly like this:
+        "Lose Yourself by Eminem"
+        "Eye of the Tiger by Survivor"
+        "Stronger by Kanye West"
+        Prompt: ${prompt}`,
+          parameters: {
+            max_length: 100,
+            truncation: true,
+            padding: "max_length",
+            batch_size: 1
+            // Ensure batch size is 1
+          }
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${HUGGINGFACE_API_KEY}`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+      const generatedText = response.data.generated_text;
+      const tracks = generatedText;
+      console.log(response);
+      res.json({ playlist: tracks });
+    } catch (err) {
+      const error = err;
+      console.error("Hugging Face Error:", error.response?.data || error.message);
+      const hfError = error.response?.data?.error || [];
+      const errorMessage = hfError || "Failed to generate playlist";
+      res.status(500).json({
+        error: errorMessage,
+        solution: errorMessage.includes("permissions") ? "Accept model terms at https://huggingface.co/google/flan-t5-xxl" : void 0
+      });
+    }
+  });
   const httpServer = createServer(app2);
   return httpServer;
 }
