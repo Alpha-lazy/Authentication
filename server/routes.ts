@@ -465,6 +465,7 @@ export function registerRoutes(app: Express) {
             url: f.url,
             imageUrl: f.imageUrl,
             songCount: f.songCount,
+            type: f.type
           }))
         );
       } catch (error) {

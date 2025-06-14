@@ -441,7 +441,8 @@ function registerRoutes(app2) {
             name: f.name,
             url: f.url,
             imageUrl: f.imageUrl,
-            songCount: f.songCount
+            songCount: f.songCount,
+            type: f.type
           }))
         );
       } catch (error) {
