@@ -184,6 +184,7 @@ function registerRoutes(app2) {
             songs: []
           };
           await db.collection("playlists").insertOne(newPlaylist);
+          res.status(200).json({ message: "Playlist created successfully", playlistId: newPlaylist.playlistId });
         } else {
           const newPlaylist = {
             playlistId: userId + Math.floor(Math.random() * 1e4).toString(),
@@ -194,8 +195,8 @@ function registerRoutes(app2) {
             songs: []
           };
           await db.collection("playlists").insertOne(newPlaylist);
+          res.status(200).json({ message: "Playlist created successfully", playlistId: newPlaylist.playlistId });
         }
-        res.status(200).json({ message: "Playlist created successfully" });
       } catch (error) {
         res.status(500).json({ message: "Error to create playlist" });
       }

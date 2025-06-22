@@ -126,6 +126,7 @@ export function registerRoutes(app: Express) {
             songs:[],
           };
           await db.collection("playlists").insertOne(newPlaylist);
+          res.status(200).json({message:"Playlist created successfully",playlistId:newPlaylist.playlistId});
         }
 
         else{
@@ -138,8 +139,8 @@ export function registerRoutes(app: Express) {
             songs:[],
           };
           await db.collection("playlists").insertOne(newPlaylist);
+          res.status(200).json({message:"Playlist created successfully",playlistId:newPlaylist.playlistId});
         }
-        res.status(200).json({message:"Playlist created successfully"});
       } catch (error) {
         res.status(500).json({ message: "Error to create playlist" });
       }
