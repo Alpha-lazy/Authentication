@@ -382,7 +382,7 @@ export function registerRoutes(app: Express) {
             .collection("playlists")
             .updateOne(
               { userId, playlistId },
-              { $set: { name,desc,imageUrl} },
+              { $set: { name:name,desc:desc,imageUrl:imageUrl} },
               { upsert: true }
             )
 
