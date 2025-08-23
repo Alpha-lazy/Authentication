@@ -57,7 +57,7 @@ export function registerRoutes(app: Express) {
           "/api/remove/playlist:playlistId",
           "/api/playlists/add/songs:playlistId",
           "/api/playlists/remove/songs:playlistId",
-          "api/playlists/update/playlist:playlistId",
+          "api/playlists/update/playlist:playlistId"
           
         ],
       },
