@@ -367,19 +367,23 @@ function registerRoutes(app2) {
         }
         const userId = req.user.id;
         const playlistId = req.params.playlistId;
-        const name = req.body?.name;
-        const desc = req.body?.desc;
-        const imageUrl = req.body?.imageUrl;
+        const { name, desc, imageUrl } = req.body || {};
         const data = await db.collection("playlists").findOne({
           userId,
           playlistId
         });
         if (data) {
-          await db.collection("playlists").updateOne(
-            { userId, playlistId },
-            { $set: { name, desc, imageUrl } },
-            { upsert: true }
-          );
+          const updateFields = {};
+          if (typeof name !== "undefined") updateFields.name = name;
+          if (typeof desc !== "undefined") updateFields.desc = desc;
+          if (typeof imageUrl !== "undefined") updateFields.imageUrl = imageUrl;
+          if (Object.keys(updateFields).length > 0) {
+            await db.collection("playlists").updateOne(
+              { userId, playlistId },
+              { $set: updateFields },
+              { upsert: true }
+            );
+          }
           res.json({ message: "Playlist update successfully" });
         }
       } catch (error) {

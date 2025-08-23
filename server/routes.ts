@@ -356,6 +356,7 @@ export function registerRoutes(app: Express) {
   // update playlist info
 
   app.post(
+    
     "/api/playlists/update/playlist:playlistId",
     authenticateToken,
     async (req: Request, res) => {
@@ -367,27 +368,28 @@ export function registerRoutes(app: Express) {
 
         const userId = req.user.id; // Use the authenticated user's ID directly
         const playlistId = req.params.playlistId;
-        const name = req.body?.name;
-        const desc = req.body?.desc;
-        const imageUrl = req.body?.imageUrl;
+        const { name, desc, imageUrl } = req.body || {};
 
         const data = await db.collection("playlists").findOne({
           userId,
           playlistId,
         });
         if (data) {
-         
-           
-            await db
-            .collection("playlists")
-            .updateOne(
-              { userId, playlistId },
-              { $set: { name:name,desc:desc,imageUrl:imageUrl} },
-              { upsert: true }
-            )
+          // Build update object dynamically
+          const updateFields: any = {};
+          if (typeof name !== 'undefined') updateFields.name = name;
+          if (typeof desc !== 'undefined') updateFields.desc = desc;
+          if (typeof imageUrl !== 'undefined') updateFields.imageUrl = imageUrl;
 
-            
-          
+          if (Object.keys(updateFields).length > 0) {
+            await db
+              .collection("playlists")
+              .updateOne(
+                { userId, playlistId },
+                { $set: updateFields },
+                { upsert: true }
+              );
+          }
           res.json({ message: "Playlist update successfully" });
         }
        
