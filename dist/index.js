@@ -132,7 +132,8 @@ function registerRoutes(app2) {
           "/api/get/playlists:songId",
           "/api/remove/playlist:playlistId",
           "/api/playlists/add/songs:playlistId",
-          "/api/playlists/remove/songs:playlistId"
+          "/api/playlists/remove/songs:playlistId",
+          "api/playlists/update/playlist:playlistId"
         ]
       }
     });
@@ -352,6 +353,36 @@ function registerRoutes(app2) {
       } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Error to add song" });
+      }
+    }
+  );
+  app2.post(
+    "/api/playlists/update/playlist:playlistId",
+    authenticateToken,
+    async (req, res) => {
+      try {
+        const db = getDB();
+        if (!req.user) {
+          return res.status(401).json({ message: "Unauthorized" });
+        }
+        const userId = req.user.id;
+        const playlistId = req.params.playlistId;
+        const { name, desc, imageUrl } = req.body;
+        const data = await db.collection("playlists").findOne({
+          userId,
+          playlistId
+        });
+        if (data) {
+          await db.collection("playlists").updateOne(
+            { userId, playlistId },
+            { $set: { name, desc, imageUrl } },
+            { upsert: true }
+          );
+          res.json({ message: "Playlist update successfully" });
+        }
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Error to update playlist" });
       }
     }
   );
