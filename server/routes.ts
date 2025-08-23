@@ -367,7 +367,9 @@ export function registerRoutes(app: Express) {
 
         const userId = req.user.id; // Use the authenticated user's ID directly
         const playlistId = req.params.playlistId;
-        const { name,desc,imageUrl } = req.body;
+        const name = req.body?.name;
+        const desc = req.body?.desc;
+        const imageUrl = req.body?.imageUrl;
 
         const data = await db.collection("playlists").findOne({
           userId,
