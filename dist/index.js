@@ -106,6 +106,8 @@ function validatePlaylist(req, res, next) {
 
 // server/routes.ts
 import axios from "axios";
+import multer from "multer";
+var upload = multer({ storage: multer.memoryStorage() });
 var MODELS = {
   TEXT_GENERATION: "tiiuae/falcon-7b-instruct",
   MUSIC_RECOMMENDATION: "sander-wood/spotify-recommendations"
@@ -359,6 +361,7 @@ function registerRoutes(app2) {
   app2.post(
     "/api/playlists/update/playlist:playlistId",
     authenticateToken,
+    upload.single("image"),
     async (req, res) => {
       try {
         const db = getDB();
@@ -377,6 +380,9 @@ function registerRoutes(app2) {
           if (typeof name !== "undefined") updateFields.name = name;
           if (typeof desc !== "undefined") updateFields.desc = desc;
           if (typeof imageUrl !== "undefined") updateFields.imageUrl = imageUrl;
+          if (req.file) {
+            updateFields.imageUrl = [req.file.buffer];
+          }
           if (Object.keys(updateFields).length > 0) {
             await db.collection("playlists").updateOne(
               { userId, playlistId },

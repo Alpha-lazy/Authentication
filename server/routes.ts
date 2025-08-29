@@ -4,8 +4,12 @@ import { authenticateToken, validatePlaylist } from "./middleware";
 import { getDB } from "./db";
 import { generateToken, registerUser, loginUser } from "./auth";
 import axios from 'axios';
-import { log } from "console";
+import multer from 'multer'
+const upload = multer({ storage: multer.memoryStorage() });
 
+interface MulterRequest extends Request {
+  file?: Express.Multer.File;
+}
 
 interface GeneratePlaylistRequest {
   prompt: string;
@@ -359,6 +363,7 @@ export function registerRoutes(app: Express) {
     
     "/api/playlists/update/playlist:playlistId",
     authenticateToken,
+    upload.single("image"),
     async (req: Request, res) => {
       try {
         const db = getDB();
@@ -380,6 +385,9 @@ export function registerRoutes(app: Express) {
           if (typeof name !== 'undefined') updateFields.name = name;
           if (typeof desc !== 'undefined') updateFields.desc = desc;
           if (typeof imageUrl !== 'undefined') updateFields.imageUrl = imageUrl;
+          if (req.file){
+            updateFields.imageUrl = [req.file.buffer]
+          }
 
           if (Object.keys(updateFields).length > 0) {
             await db
