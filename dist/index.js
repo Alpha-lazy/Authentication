@@ -382,12 +382,9 @@ function registerRoutes(app2) {
         const updateFields = {};
         if (typeof name !== "undefined") updateFields.name = name;
         if (typeof desc !== "undefined") updateFields.desc = desc;
+        if (typeof imageUrl !== "undefined") updateFields.imageUrl = imageUrl;
         if (req.file) {
           updateFields.imageUrl = [req.file.buffer.toString("base64")];
-        }
-        if (imageUrl) {
-          const currentImages = Array.isArray(data.imageUrl) ? data.imageUrl : [];
-          updateFields.imageUrl = [...currentImages, imageUrl];
         }
         if (Object.keys(updateFields).length > 0) {
           await db.collection("playlists").updateOne(

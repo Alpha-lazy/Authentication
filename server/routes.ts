@@ -442,17 +442,14 @@ export function registerRoutes(app: Express) {
       const updateFields: any = {};
       if (typeof name !== "undefined") updateFields.name = name;
       if (typeof desc !== "undefined") updateFields.desc = desc;
+      if (typeof imageUrl !== "undefined") updateFields.imageUrl = imageUrl;
 
       // Case 1: file uploaded → save its binary buffer
       if (req.file) {
         updateFields.imageUrl = [ req.file.buffer.toString('base64')]; // buffer stored
       }
 
-      // Case 2: imageUrl sent in body → save it as a link
-      if (imageUrl) {
-        const currentImages = Array.isArray(data.imageUrl) ? data.imageUrl : [];
-        updateFields.imageUrl = [...currentImages, imageUrl]; // link stored
-      }
+      
 
       if (Object.keys(updateFields).length > 0) {
         await db.collection("playlists").updateOne(
