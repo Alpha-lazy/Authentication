@@ -359,8 +359,7 @@ function registerRoutes(app2) {
     }
   );
   app2.post(
-    "/api/playlists/update/playlist/:playlistId",
-    // <- small bug fix, you missed ":" before
+    "/api/playlists/update/playlist:playlistId",
     authenticateToken,
     upload.single("image"),
     async (req, res) => {
@@ -376,27 +375,23 @@ function registerRoutes(app2) {
           userId,
           playlistId
         });
-        if (!data) {
-          return res.status(404).json({ message: "Playlist not found" });
+        if (data) {
+          const updateFields = {};
+          if (typeof name !== "undefined") updateFields.name = name;
+          if (typeof desc !== "undefined") updateFields.desc = desc;
+          if (typeof imageUrl !== "undefined") updateFields.imageUrl = imageUrl;
+          if (Object.keys(updateFields).length > 0) {
+            await db.collection("playlists").updateOne(
+              { userId, playlistId },
+              { $set: updateFields },
+              { upsert: true }
+            );
+          }
+          res.json({ message: "Playlist update successfully" });
         }
-        const updateFields = {};
-        if (typeof name !== "undefined") updateFields.name = name;
-        if (typeof desc !== "undefined") updateFields.desc = desc;
-        if (typeof imageUrl !== "undefined") updateFields.imageUrl = imageUrl;
-        if (req.file) {
-          updateFields.imageUrl = [req.file.buffer.toString("base64")];
-        }
-        if (Object.keys(updateFields).length > 0) {
-          await db.collection("playlists").updateOne(
-            { userId, playlistId },
-            { $set: updateFields },
-            { upsert: true }
-          );
-        }
-        res.json({ message: "Playlist updated successfully" });
       } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Error updating playlist" });
+        console.log(error);
+        res.status(500).json({ message: "Error to update playlist" });
       }
     }
   );
