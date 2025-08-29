@@ -385,8 +385,11 @@ export function registerRoutes(app: Express) {
           if (typeof name !== 'undefined') updateFields.name = name;
           if (typeof desc !== 'undefined') updateFields.desc = desc;
           if (typeof imageUrl !== 'undefined') updateFields.imageUrl = imageUrl;
-          if (req.file){
-            updateFields.imageUrl = [req.file.buffer]
+
+          // If a file is uploaded, append its buffer to the imageUrl array
+          if (req.file) {
+            const currentImages = Array.isArray(data.imageUrl) ? data.imageUrl : [];
+            updateFields.imageUrl = [...currentImages, req.file.buffer];
           }
 
           if (Object.keys(updateFields).length > 0) {
