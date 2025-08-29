@@ -445,8 +445,7 @@ export function registerRoutes(app: Express) {
 
       // Case 1: file uploaded → save its binary buffer
       if (req.file) {
-        const currentImages = Array.isArray(data.imageUrl) ? data.imageUrl : [];
-        updateFields.imageUrl = [...currentImages, req.file.buffer.toString('base64')]; // buffer stored
+        updateFields.imageUrl = [ req.file.buffer.toString('base64')]; // buffer stored
       }
 
       // Case 2: imageUrl sent in body → save it as a link

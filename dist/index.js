@@ -383,8 +383,7 @@ function registerRoutes(app2) {
         if (typeof name !== "undefined") updateFields.name = name;
         if (typeof desc !== "undefined") updateFields.desc = desc;
         if (req.file) {
-          const currentImages = Array.isArray(data.imageUrl) ? data.imageUrl : [];
-          updateFields.imageUrl = [...currentImages, req.file.buffer.toString("base64")];
+          updateFields.imageUrl = [req.file.buffer.toString("base64")];
         }
         if (imageUrl) {
           const currentImages = Array.isArray(data.imageUrl) ? data.imageUrl : [];
