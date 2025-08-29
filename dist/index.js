@@ -359,7 +359,8 @@ function registerRoutes(app2) {
     }
   );
   app2.post(
-    "/api/playlists/update/playlist:playlistId",
+    "/api/playlists/update/playlist/:playlistId",
+    // <- small bug fix, you missed ":" before
     authenticateToken,
     upload.single("image"),
     async (req, res) => {
@@ -375,27 +376,31 @@ function registerRoutes(app2) {
           userId,
           playlistId
         });
-        if (data) {
-          const updateFields = {};
-          if (typeof name !== "undefined") updateFields.name = name;
-          if (typeof desc !== "undefined") updateFields.desc = desc;
-          if (typeof imageUrl !== "undefined") updateFields.imageUrl = imageUrl;
-          if (req.file) {
-            const currentImages = Array.isArray(data.imageUrl) ? data.imageUrl : [];
-            updateFields.imageUrl = [...currentImages, req.file.buffer];
-          }
-          if (Object.keys(updateFields).length > 0) {
-            await db.collection("playlists").updateOne(
-              { userId, playlistId },
-              { $set: updateFields },
-              { upsert: true }
-            );
-          }
-          res.json({ message: "Playlist update successfully" });
+        if (!data) {
+          return res.status(404).json({ message: "Playlist not found" });
         }
+        const updateFields = {};
+        if (typeof name !== "undefined") updateFields.name = name;
+        if (typeof desc !== "undefined") updateFields.desc = desc;
+        if (req.file) {
+          const currentImages = Array.isArray(data.imageUrl) ? data.imageUrl : [];
+          updateFields.imageUrl = [...currentImages, req.file.buffer];
+        }
+        if (imageUrl) {
+          const currentImages = Array.isArray(data.imageUrl) ? data.imageUrl : [];
+          updateFields.imageUrl = [...currentImages, imageUrl];
+        }
+        if (Object.keys(updateFields).length > 0) {
+          await db.collection("playlists").updateOne(
+            { userId, playlistId },
+            { $set: updateFields },
+            { upsert: true }
+          );
+        }
+        res.json({ message: "Playlist updated successfully" });
       } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Error to update playlist" });
+        console.error(error);
+        res.status(500).json({ message: "Error updating playlist" });
       }
     }
   );

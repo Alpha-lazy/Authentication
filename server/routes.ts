@@ -359,60 +359,118 @@ export function registerRoutes(app: Express) {
 
   // update playlist info
 
-  app.post(
+  // app.post(
     
-    "/api/playlists/update/playlist:playlistId",
-    authenticateToken,
-    upload.single("image"),
-    async (req: Request, res) => {
-      try {
-        const db = getDB();
-        if (!req.user) {
-          return res.status(401).json({ message: "Unauthorized" });
-        }
+  //   "/api/playlists/update/playlist:playlistId",
+  //   authenticateToken,
+  //   upload.single("image"),
+  //   async (req: Request, res) => {
+  //     try {
+  //       const db = getDB();
+  //       if (!req.user) {
+  //         return res.status(401).json({ message: "Unauthorized" });
+  //       }
 
-        const userId = req.user.id; // Use the authenticated user's ID directly
-        const playlistId = req.params.playlistId;
-        const { name, desc, imageUrl } = req.body || {};
+  //       const userId = req.user.id; // Use the authenticated user's ID directly
+  //       const playlistId = req.params.playlistId;
+  //       const { name, desc, imageUrl } = req.body || {};
 
-        const data = await db.collection("playlists").findOne({
-          userId,
-          playlistId,
-        });
-        if (data) {
-          // Build update object dynamically
-          const updateFields: any = {};
-          if (typeof name !== 'undefined') updateFields.name = name;
-          if (typeof desc !== 'undefined') updateFields.desc = desc;
-          if (typeof imageUrl !== 'undefined') updateFields.imageUrl = imageUrl;
+  //       const data = await db.collection("playlists").findOne({
+  //         userId,
+  //         playlistId,
+  //       });
+  //       if (data) {
+  //         // Build update object dynamically
+  //         const updateFields: any = {};
+  //         if (typeof name !== 'undefined') updateFields.name = name;
+  //         if (typeof desc !== 'undefined') updateFields.desc = desc;
+  //         if (typeof imageUrl !== 'undefined') updateFields.imageUrl = imageUrl;
 
-          // If a file is uploaded, append its buffer to the imageUrl array
-          if (req.file) {
-            const currentImages = Array.isArray(data.imageUrl) ? data.imageUrl : [];
-            updateFields.imageUrl = [...currentImages, req.file.buffer];
-          }
+  //         // If a file is uploaded, append its buffer to the imageUrl array
+  //         if (req.file) {
+  //           const currentImages = Array.isArray(data.imageUrl) ? data.imageUrl : [];
+  //           updateFields.imageUrl = [...currentImages, req.file.buffer];
+  //         }
 
-          if (Object.keys(updateFields).length > 0) {
-            await db
-              .collection("playlists")
-              .updateOne(
-                { userId, playlistId },
-                { $set: updateFields },
-                { upsert: true }
-              );
-          }
-          res.json({ message: "Playlist update successfully" });
-        }
+  //         if (Object.keys(updateFields).length > 0) {
+  //           await db
+  //             .collection("playlists")
+  //             .updateOne(
+  //               { userId, playlistId },
+  //               { $set: updateFields },
+  //               { upsert: true }
+  //             );
+  //         }
+  //         res.json({ message: "Playlist update successfully" });
+  //       }
        
 
       
-      } catch (error) {
-        console.log(error);
+  //     } catch (error) {
+  //       console.log(error);
 
-        res.status(500).json({ message: "Error to update playlist" });
+  //       res.status(500).json({ message: "Error to update playlist" });
+  //     }
+  //   }
+  // );
+
+  app.post(
+  "/api/playlists/update/playlist/:playlistId",  // <- small bug fix, you missed ":" before
+  authenticateToken,
+  upload.single("image"),
+  async (req: Request, res) => {
+    try {
+      const db = getDB();
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
       }
+
+      const userId = req.user.id;
+      const playlistId = req.params.playlistId;
+      const { name, desc, imageUrl } = req.body || {};
+
+      const data = await db.collection("playlists").findOne({
+        userId,
+        playlistId,
+      });
+
+      if (!data) {
+        return res.status(404).json({ message: "Playlist not found" });
+      }
+
+      // Build update object dynamically
+      const updateFields: any = {};
+      if (typeof name !== "undefined") updateFields.name = name;
+      if (typeof desc !== "undefined") updateFields.desc = desc;
+
+      // Case 1: file uploaded → save its binary buffer
+      if (req.file) {
+        const currentImages = Array.isArray(data.imageUrl) ? data.imageUrl : [];
+        updateFields.imageUrl = [...currentImages, req.file.buffer]; // buffer stored
+      }
+
+      // Case 2: imageUrl sent in body → save it as a link
+      if (imageUrl) {
+        const currentImages = Array.isArray(data.imageUrl) ? data.imageUrl : [];
+        updateFields.imageUrl = [...currentImages, imageUrl]; // link stored
+      }
+
+      if (Object.keys(updateFields).length > 0) {
+        await db.collection("playlists").updateOne(
+          { userId, playlistId },
+          { $set: updateFields },
+          { upsert: true }
+        );
+      }
+
+      res.json({ message: "Playlist updated successfully" });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Error updating playlist" });
     }
-  );
+  }
+);
+
 
   // Playlist routes - all require authentication
   app.get("/api/playlists", authenticateToken, async (req, res) => {
